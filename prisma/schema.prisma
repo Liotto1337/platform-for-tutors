@@ -1,0 +1,265 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  TUTOR
+  STUDENT
+  PARENT
+}
+
+enum ConsentAction {
+  GRANTED
+  REVOKED
+}
+
+enum TestStatus {
+  DRAFT
+  REVIEWED
+}
+
+enum QuestionFormat {
+  SINGLE_CHOICE
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum JobType {
+  QUESTIONS
+  GAMMA
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  READY
+  FAILED
+}
+
+enum PresentationOrigin {
+  GAMMA
+  UPLOAD
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  role          Role     @default(STUDENT)
+  sessions      Session[]
+  accounts      Account[]
+  children      GuardianLink[] @relation("Guardian")
+  guardians     GuardianLink[] @relation("Student")
+  consentActions ConsentEvent[] @relation("Actor")
+  consentSubjects ConsentEvent[] @relation("Subject")
+  tests          Test[]
+  sources        Source[]
+  presentations  Presentation[]
+  jobs           GenerationJob[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Account {
+  id                    String   @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([identifier])
+}
+
+model GuardianLink {
+  guardianId  String
+  studentId   String
+  confirmedAt DateTime
+  guardian    User @relation("Guardian", fields: [guardianId], references: [id])
+  student     User @relation("Student", fields: [studentId], references: [id])
+  @@id([guardianId, studentId])
+  @@index([studentId])
+}
+
+model ConsentDocument {
+  id        String @id @default(uuid())
+  type      String
+  version   String
+  text      String
+  active    Boolean @default(false)
+  createdAt DateTime @default(now())
+  events    ConsentEvent[]
+  @@unique([type, version])
+}
+
+model ConsentEvent {
+  id          BigInt @id @default(autoincrement())
+  documentId  String
+  actorId     String
+  subjectId   String
+  action      ConsentAction
+  method      String
+  createdAt   DateTime @default(now())
+  document    ConsentDocument @relation(fields: [documentId], references: [id])
+  actor       User @relation("Actor", fields: [actorId], references: [id])
+  subject     User @relation("Subject", fields: [subjectId], references: [id])
+  @@index([documentId, subjectId, actorId, id])
+}
+
+model Topic {
+  id        String @id
+  name      String @unique
+  questions Question[]
+}
+
+model Era {
+  id        String @id
+  name      String @unique
+  questions Question[]
+}
+
+model Source {
+  id        String @id @default(uuid())
+  ownerId   String
+  title     String
+  text      String
+  createdAt DateTime @default(now())
+  owner     User @relation(fields: [ownerId], references: [id])
+  questions Question[]
+  jobs      GenerationJob[]
+  @@index([ownerId, createdAt])
+}
+
+model Test {
+  id         String @id @default(uuid())
+  ownerId    String
+  title      String
+  status     TestStatus @default(DRAFT)
+  revision   Int @default(0)
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  owner      User @relation(fields: [ownerId], references: [id])
+  questions  Question[]
+  job        GenerationJob?
+  @@index([ownerId, updatedAt])
+}
+
+model Question {
+  id         String @id @default(uuid())
+  testId     String
+  position   Int
+  text       String
+  format     QuestionFormat @default(SINGLE_CHOICE)
+  difficulty Difficulty?
+  topicId    String?
+  eraId      String?
+  sourceId   String?
+  excerpt    String?
+  test       Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+  topic      Topic? @relation(fields: [topicId], references: [id])
+  era        Era? @relation(fields: [eraId], references: [id])
+  source     Source? @relation(fields: [sourceId], references: [id])
+  options    QuestionOption[]
+  @@unique([testId, position])
+}
+
+model QuestionOption {
+  id        String @id @default(uuid())
+  questionId String
+  position  Int
+  text      String
+  correct   Boolean
+  question  Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  @@unique([questionId, position])
+}
+
+model Presentation {
+  id        String @id @default(uuid())
+  ownerId   String
+  title     String
+  objectKey String @unique
+  origin    PresentationOrigin
+  createdAt DateTime @default(now())
+  owner     User @relation(fields: [ownerId], references: [id])
+  job       GenerationJob?
+  @@index([ownerId, createdAt])
+}
+
+model GenerationJob {
+  id             String @id @default(uuid())
+  ownerId        String
+  type           JobType
+  status         JobStatus @default(QUEUED)
+  requestKey     String
+  title          String
+  sourceId       String?
+  lessonPlan     String?
+  providerId     String?
+  submissionAt   DateTime?
+  leaseToken     String?
+  leaseUntil     DateTime?
+  nextRunAt      DateTime @default(now())
+  attempts       Int @default(0)
+  credits        Int?
+  error          String?
+  testId         String? @unique
+  presentationId String? @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  owner          User @relation(fields: [ownerId], references: [id])
+  source         Source? @relation(fields: [sourceId], references: [id])
+  test           Test? @relation(fields: [testId], references: [id])
+  presentation   Presentation? @relation(fields: [presentationId], references: [id])
+  @@unique([ownerId, type, requestKey])
+  @@index([status, nextRunAt, leaseUntil])
+}
+
+model RateLimit {
+  id String @id @default(uuid())
+  key String @unique
+  count Int
+  lastRequest BigInt
+}
