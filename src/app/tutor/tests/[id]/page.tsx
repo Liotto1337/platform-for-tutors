@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ActionForm } from "@/components/action-form";
+import { assign } from "@/modules/actions/schoolwork";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PageHeading, Shell } from "@/components/shell";
@@ -30,6 +32,10 @@ export default async function TestPage({ params, searchParams }: {
       <DeleteTestButton id={test.id} />
     </PageHeading>
     {query.saved === "1" && <p className="success" role="status">Изменения сохранены.</p>}
+    {test.status === "REVIEWED" && <section className="panel stack"><h2>Назначить проверенную версию</h2>
+      <ActionForm action={assign.bind(null, test.id)} label="Назначить тест">
+        <label>Почта ученика<input type="email" name="email" required /></label>
+      </ActionForm></section>}
     <TestEditor key={test.id + ":" + test.revision} id={test.id} revision={test.revision}
       initialTitle={test.title} initialQuestions={questions} topics={topics} eras={eras} />
   </Shell>;

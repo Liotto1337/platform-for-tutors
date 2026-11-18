@@ -8,8 +8,9 @@ const roleName = { TUTOR: "Репетитор", STUDENT: "Ученик", PARENT:
 export const tutorLinks = [
   ["/tutor", "Обзор"], ["/tutor/tests", "Тесты"], ["/tutor/sources", "Источники"],
   ["/tutor/presentations", "Презентации"],
+  ["/tutor/practice", "Практические задания"],
 ];
-const studentLinks = [["/student", "Кабинет"], ["/student/study", "Учебный раздел"], ["/student/consent", "Согласие"]];
+const studentLinks = [["/student", "Кабинет"], ["/student/study", "Учебный раздел"], ["/student/practice", "Практические задания"], ["/student/consent", "Согласие"]];
 const parentLinks = [["/parent", "Кабинет"], ["/parent/consent", "Согласие"]];
 
 export function Shell({ user, section, children }: {

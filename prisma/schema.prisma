@@ -69,6 +69,30 @@ model User {
   sources        Source[]
   presentations  Presentation[]
   jobs           GenerationJob[]
+  assignedWork   Assignment[] @relation("TutorWork")
+  schoolwork     Assignment[] @relation("StudentWork")
+}
+
+model Assignment {
+  id          String @id @default(uuid())
+  ownerId     String
+  studentId   String
+  title       String
+  prompt      String
+  testId      String?
+  questions   Json?
+  createdAt   DateTime @default(now())
+  submittedAt DateTime?
+  answer      String?
+  photo       Bytes?
+  photoType   String?
+  score       Int?
+  total       Int?
+  pauses      Int @default(0)
+  owner       User @relation("TutorWork", fields: [ownerId], references: [id], onDelete: Cascade)
+  student     User @relation("StudentWork", fields: [studentId], references: [id], onDelete: Cascade)
+  @@index([studentId, createdAt])
+  @@index([ownerId, createdAt])
 }
 
 model Session {

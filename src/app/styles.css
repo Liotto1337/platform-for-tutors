@@ -89,6 +89,20 @@ small { display: block; color: var(--muted); font-size: .83rem; }
 .filters { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
 .classification { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .back { width: fit-content; }
+.exam-surface { min-height: 100dvh; background: var(--paper); padding: clamp(1rem, 4vw, 3rem); }
+.exam-surface:fullscreen { overflow-y: auto; }
+.exam-body { max-width: 52rem; margin: auto; }
+.print-deck { display: none; }
+@media print {
+  body:has(.print-deck) :is(.workspace, .content, section, div):has(.print-deck) { display: contents; }
+  body:has(.print-deck) *:not(:has(.print-deck), .print-deck, .print-deck *) { display: none !important; }
+  .print-deck { display: block; }
+  .print-deck article { page: slide; break-after: page; padding: 12mm; }
+  .print-deck article:last-child { break-after: auto; }
+  .print-deck p { font-size: 20pt; margin-top: 10mm; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .print-deck h1 { font-size: 32pt; overflow-wrap: anywhere; }
+  @page slide { size: landscape; margin: 10mm; }
+}
 .source-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 40rem; overflow: auto; }
 .consent-row { padding-top: 1rem; border-top: 1px solid var(--line); }
 .success { color: var(--primary); font-weight: 700; }

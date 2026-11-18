@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { Catalog } from "./catalog";
 import { db } from "@/lib/db";
 import { Jobs } from "@/components/jobs";
 import { ActionForm } from "@/components/action-form";
@@ -14,6 +15,7 @@ export default async function Presentations() {
   ]);
   return <Shell user={user} section="/tutor/presentations">
     <PageHeading title="Презентации" description="Создайте презентацию из плана урока или добавьте готовый PDF." />
+    <Catalog gamma={Boolean(process.env.GAMMA_API_KEY)} requestKey={randomUUID()} />
     <div className="split">
       <section className="panel stack"><h2>Создать в Gamma</h2>
         {process.env.GAMMA_API_KEY ? <ActionForm action={queueGamma} label="Отправить в Gamma">
